@@ -1,0 +1,23 @@
+Manifest-Version: 1.0
+Created-By: Apache Maven 3.8.6
+Built-By: centos
+Build-Jdk: 17.0.2
+Specification-Title: Debezium Core
+Specification-Version: 2.2
+Specification-Vendor: JBoss by Red Hat
+Implementation-Title: Debezium Core
+Implementation-Version: 2.2.0.Final
+Implementation-Vendor-Id: io.debezium
+Implementation-Vendor: JBoss by Red Hat
+Implementation-URL: https://debezium.io/debezium-parent/debezium-core
+Java-Vendor: Oracle Corporation
+Java-Version: 17.0.2
+Os-Arch: amd64
+Os-Name: Linux
+Os-Version: 4.18.0-358.el8.x86_64
+Scm-Connection: scm:git:git@github.com:debezium/debezium.git/debezium-pa
+ rent/debezium-core
+Scm-Revision: 1522c0c127378142d6da936e4f08af7493d994f5
+Scm-Url: https://github.com/debezium/debezium/debezium-parent/debezium-c
+ ore
+
