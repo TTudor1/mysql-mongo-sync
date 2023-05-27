@@ -1,27 +1,29 @@
-package org.disertatie.dbsync.common;
+package org.disertatie.dbsync.common.event;
 
 import java.util.Map;
 
-public class CaputureKafkaEvent {
-    private Map<String,String> before;
-    private Map<String,String> after;
+import org.disertatie.dbsync.common.Source;
+
+public class Payload {
+    private Map<String,Object> before;
+    private Map<String,Object> after;
     private Source source;
     private String op;
     private long ts_ms;
 
-    public Map<String,String> getBefore() {
+    public Map<String,Object> getBefore() {
         return this.before;
     }
 
-    public void setBefore(Map<String,String> before) {
+    public void setBefore(Map<String,Object> before) {
         this.before = before;
     }
 
-    public Map<String,String> getAfter() {
+    public Map<String,Object> getAfter() {
         return this.after;
     }
 
-    public void setAfter(Map<String,String> after) {
+    public void setAfter(Map<String,Object> after) {
         this.after = after;
     }
 

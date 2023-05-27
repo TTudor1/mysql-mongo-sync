@@ -1,6 +1,8 @@
-package org.disertatie.dbsync.common;
+package org.disertatie.dbsync.common.event;
 
-public class CaputureKafkaMongoEvent {
+import org.disertatie.dbsync.common.Source;
+
+public class PayloadMongo {
     private String before;
     private String after;
     private Source source;

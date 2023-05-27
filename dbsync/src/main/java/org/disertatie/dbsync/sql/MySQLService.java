@@ -16,8 +16,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class MySQLService {
     
-    @Autowired
-    private DataExampleSQLRepository repository;
+    // @Autowired
+    // private DataExampleSQLRepository repository;
     @Autowired
     private JdbcTemplate jdbcTemplate;
     
@@ -53,11 +53,18 @@ public class MySQLService {
         return data;
     }
 
-    public void insertRecord(String tableName, Map<String,String> values) {
-        String keys = values.keySet().stream().reduce("", (a, b) -> a + " " + b);
-        String vals = values.values().stream().reduce("", (a, b) -> a + " " + b);
-        String query = "insert into " + tableName + " (" + keys + ") values (" + vals + ")";
+    public void insertRecord(String tableName, Map<String,Object> values) {
+        String keys = values.keySet().stream().reduce("", (a, b) -> a + b + ",");
+        String vals = values.values().stream().map(v -> v.toString()).reduce("", (a, b) -> a + "'" + b + "',");
+        
+        String query = "insert into " + tableName + " (" + removeLastChar(keys) + ") values (" + removeLastChar(vals) + ")";
         jdbcTemplate.execute(query);
-        List<Map<String, Object>> rows = jdbcTemplate.queryForList(query);
+        // List<Map<String, Object>> rows = jdbcTemplate.queryForList(query);
+    }
+
+    public static String removeLastChar(String s) {
+        return (s == null || s.length() == 0)
+          ? null 
+          : (s.substring(0, s.length() - 1));
     }
 }

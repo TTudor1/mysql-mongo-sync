@@ -4,29 +4,25 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.bson.Document;
-import org.disertatie.dbsync.common.CaputureKafkaEvent;
 import org.disertatie.dbsync.common.Data;
-import org.disertatie.dbsync.nosql.model.DataExample;
-import org.disertatie.dbsync.sql.DataExampleSQL;
+import org.disertatie.dbsync.common.event.Payload;
+import org.disertatie.dbsync.nosql.model.UpdateStats;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.mapreduce.MapReduceResults;
 import org.springframework.stereotype.Service;
 
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoIterable;
 
 @Service
 public class MyMongoService  {
     
-    private DataExampleRepository repository;
+    private UpdateStatsRepository statsRepository;
     MongoTemplate mongoTemplate;
 
     @Autowired
-    public MyMongoService(DataExampleRepository repository) {
-        this.repository = repository;
+    public MyMongoService(UpdateStatsRepository statsRepository) {
+        this.statsRepository = statsRepository;
         MongoClient mongo = MongoClients.create();
         MongoTemplate mongoTemplate = new MongoTemplate(mongo, "test");
         this.mongoTemplate = mongoTemplate;
@@ -47,14 +43,40 @@ public class MyMongoService  {
 
     }
 
-    public void kafkaDataInsert(String schema, CaputureKafkaEvent data) {
+    public void kafkaDataInsert(String schema, Payload data) {
         mongoTemplate.insert(data.getAfter(), data.getSource().getTable());
     }
-    public void kafkaDataUpdate(String schema, CaputureKafkaEvent data) {
+    public void kafkaDataUpdate(String schema, Payload data) {
         mongoTemplate.save(data.getAfter(), data.getSource().getTable());
     }
-    public void kafkaDataDelete(String schema, CaputureKafkaEvent data) {
+    public void kafkaDataDelete(String schema, Payload data) {
         mongoTemplate.remove(data.getBefore(), data.getSource().getTable());
+    }
+
+    public long getLastUpdate(String db) {
+        List<UpdateStats> allStats = statsRepository.findAll();
+        if (allStats.size() == 0) {
+            return 0;
+        }
+        UpdateStats mongoStats = allStats.stream().filter(s -> s.getDbName().equals(db)).findAny().orElse(null);
+        if (mongoStats == null) {
+            return 0;
+        } else {
+            return mongoStats.getLast();
+        }
+    }
+
+    public void setLastUpdate(long updateTime, String db) {
+        List<UpdateStats> allStats = statsRepository.findAll();
+        UpdateStats mongoStats = allStats.stream().filter(s -> s.getDbName().equals(db)).findAny().orElse(null);
+        if (mongoStats == null) {
+            mongoStats = new UpdateStats();
+            mongoStats.setDbName(db);
+            mongoStats.setLast(updateTime);
+        } else {
+            mongoStats.setLast(updateTime);
+        }
+        statsRepository.save(mongoStats);
     }
 
     // public void test() {

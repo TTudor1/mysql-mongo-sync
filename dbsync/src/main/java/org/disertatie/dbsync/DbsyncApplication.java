@@ -3,7 +3,6 @@ package org.disertatie.dbsync;
 import java.util.List;
 
 import org.disertatie.dbsync.common.Data;
-import org.disertatie.dbsync.common.Schema;
 import org.disertatie.dbsync.nosql.MyMongoService;
 import org.disertatie.dbsync.sql.MySQLService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +11,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 
 @SpringBootApplication
 @EnableScheduling
