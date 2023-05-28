@@ -44,13 +44,23 @@ public class MyMongoService  {
     }
 
     public void kafkaDataInsert(String schema, Payload data) {
-        mongoTemplate.insert(data.getAfter(), data.getSource().getTable());
+        System.out.println("CREATING in mongo" + data.getAfter().get("_id"));
+        Object result = mongoTemplate.findById(data.getAfter().get("_id"), Object.class, schema);
+        if (result == null) {
+            mongoTemplate.insert(data.getAfter(), data.getSource().getTable());
+        }
     }
+    
     public void kafkaDataUpdate(String schema, Payload data) {
         mongoTemplate.save(data.getAfter(), data.getSource().getTable());
     }
+
     public void kafkaDataDelete(String schema, Payload data) {
-        mongoTemplate.remove(data.getBefore(), data.getSource().getTable());
+        System.out.println("DELETING in mongo" + data.getBefore().get("_id"));
+        Object result = mongoTemplate.findById(data.getBefore().get("_id"), Object.class, schema);
+        if (result != null) {
+            mongoTemplate.remove(data.getBefore(), data.getSource().getTable());
+        }
     }
 
     public long getLastUpdate(String db) {

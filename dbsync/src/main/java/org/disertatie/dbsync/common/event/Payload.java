@@ -10,6 +10,16 @@ public class Payload {
     private Source source;
     private String op;
     private long ts_ms;
+    private String id;
+
+
+    public String getId() {
+        return this.id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
 
     public Map<String,Object> getBefore() {
         return this.before;

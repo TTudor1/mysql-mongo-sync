@@ -1,5 +1,7 @@
 package org.disertatie.dbsync.sql;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -9,8 +11,10 @@ import org.disertatie.dbsync.common.Data;
 import org.disertatie.dbsync.common.Schema;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.jdbc.support.rowset.SqlRowSetMetaData;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -54,12 +58,57 @@ public class MySQLService {
     }
 
     public void insertRecord(String tableName, Map<String,Object> values) {
+        String query = "select id from " + tableName + " where id = '" + values.get("id") + "'";
+        List<Object> res = jdbcTemplate.query(query, new RowMapper<Object>(){
+            @Override
+            @Nullable
+            public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+                return null;
+            }
+        });
+        if (!res.isEmpty()) {
+            return;
+        }
         String keys = values.keySet().stream().reduce("", (a, b) -> a + b + ",");
         String vals = values.values().stream().map(v -> v.toString()).reduce("", (a, b) -> a + "'" + b + "',");
         
-        String query = "insert into " + tableName + " (" + removeLastChar(keys) + ") values (" + removeLastChar(vals) + ")";
+        query = "insert into " + tableName + " (" + removeLastChar(keys) + ") values (" + removeLastChar(vals) + ")";
         jdbcTemplate.execute(query);
-        // List<Map<String, Object>> rows = jdbcTemplate.queryForList(query);
+    }
+
+    public void updateRecord(String tableName, Map<String,Object> values) {
+        String query = "select id from " + tableName + " where id = '" + values.get("id") + "'";
+        List<Object> res = jdbcTemplate.query(query, new RowMapper<Object>(){
+            @Override
+            @Nullable
+            public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+                return null;
+            }
+        });
+        if (res.isEmpty()) {
+            return;
+        }
+        String vals = values.keySet().stream().map(v -> v + " = '" + values.get(v) + "'").reduce("", (a, v) -> a + v + ",");
+                        
+        query = "update " + tableName + " set " + removeLastChar(vals) + " where id = " + values.get("id");
+        jdbcTemplate.execute(query);
+    }
+
+    public void deleteRecord(String tableName, String id) {
+        String query = "select id from " + tableName + " where id = '" + id + "'";
+        List<Object> res = jdbcTemplate.query(query, new RowMapper<Object>(){
+            @Override
+            @Nullable
+            public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+                return null;
+            }
+        });
+        if (res.isEmpty()) {
+            return;
+        }
+        
+        query = "delete from " + tableName + " where id =" + id;
+        jdbcTemplate.execute(query);
     }
 
     public static String removeLastChar(String s) {

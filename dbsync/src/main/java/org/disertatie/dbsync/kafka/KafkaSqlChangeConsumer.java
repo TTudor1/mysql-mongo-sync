@@ -2,6 +2,7 @@ package org.disertatie.dbsync.kafka;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Objects;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.disertatie.dbsync.common.DeserializerProvider;
@@ -26,17 +27,24 @@ public class KafkaSqlChangeConsumer {
     DeserializerProvider serde;
 
     private static final String prefix = "trt";
-    // @KafkaListener(topics = prefix + ".db_example.data_examplesql", groupId = "test-group")
-    public void consume(ConsumerRecord<String, String> payload) {
+    @KafkaListener(topics = prefix + ".db_example.data_examplesql", groupId = "test-group")
+    public void consume(ConsumerRecord<String, String> kafkaPayload) {
 
         System.out.println("--------DETECTED SQL RECORD CHANGE--------");
-        byte[] payloadBytes =  payload.value() == null ? null :  payload.value().getBytes();
+        byte[] payloadValueBytes =  kafkaPayload.value() == null ? null :  kafkaPayload.value().getBytes();
         ObjectMapper mapper = new ObjectMapper()
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
   
-        CaputureKafkaEvent test1 = null;
+        if (payloadValueBytes == null) {
+            return;
+        }
+
+        CaputureKafkaEvent payloadValue = null;
+        CaputureKafkaEvent payloadKey = null;
+
         try {
-            test1 = mapper.readValue(payloadBytes, CaputureKafkaEvent.class);
+            payloadKey = mapper.readValue(kafkaPayload.key().getBytes(), CaputureKafkaEvent.class);
+            payloadValue = mapper.readValue(payloadValueBytes, CaputureKafkaEvent.class);
         } catch (StreamReadException e) {
             e.printStackTrace();
         } catch (DatabindException e) {
@@ -44,43 +52,44 @@ public class KafkaSqlChangeConsumer {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        if (test1 == null) {
+        if (payloadValue == null) {
             return;
         }
-        Payload test = test1.getPayload();
-        // Schema schema = test1.getSchema();
-        if (test != null) {
-            System.out.println(test.getTs_ms() + " " + test.getOp());
-        } else {
-            System.out.println("null object");
-            return;
+        Payload payload = payloadValue.getPayload();
+        
+        System.out.println("id=" + payloadKey.getPayload().getId() + " " + payload.getOp());
+        // System.out.println(test.getTs_ms() + " " + test.getOp());
+
+        if(payload.getBefore() != null) {
+            Integer id = (Integer) payload.getBefore().get("id");
+                payload.getBefore().put("_id", id);
+                payload.getBefore().remove("id");
         }
-        if(test.getBefore() != null) {
-            Integer id = (Integer) test.getBefore().get("id");
-                test.getBefore().put("_id", id);
-                test.getBefore().remove("id");
-        }
-        if(test.getAfter() != null) {
-            Integer id = (Integer)((Map)test.getAfter()).get("id");
-            test.getAfter().put("_id", id);
-            test.getAfter().remove("id");
+        if(payload.getAfter() != null) {
+            Integer id = (Integer)((Map)payload.getAfter()).get("id");
+            payload.getAfter().put("_id", id);
+            payload.getAfter().remove("id");
         }
 
-        if (test.getTs_ms() > mongoService.getLastUpdate("mongo")) {
-            switch (test.getOp()) {
+        if (payload.getTs_ms() >= mongoService.getLastUpdate("mongo")) {
+            switch (payload.getOp()) {
                 case "c": //create
-                mongoService.kafkaDataInsert("data_examplesql", test);
+                mongoService.kafkaDataInsert("data_examplesql", payload);
                     break;
-                case "r": //read
+                case "r": //read - only when doing snapshot due to topic errors
                     break; //noop
                 case "u": //update
-                mongoService.kafkaDataUpdate("data_examplesql", test);
+                    if (!Objects.deepEquals(payload.getAfter(), payload.getBefore())) {
+                        mongoService.kafkaDataUpdate("data_examplesql", payload);
+                    }
                     break;
                 case "d": //delete
-                mongoService.kafkaDataDelete("data_examplesql", test);
+                mongoService.kafkaDataDelete("data_examplesql", payload);
                     break;
             }
-            mongoService.setLastUpdate(test.getTs_ms(), "mongo");
+            mongoService.setLastUpdate(payload.getTs_ms(), "mongo");
+        } else {
+            System.out.println("Message dropped tsms:" + payload.getTs_ms() + " dbTime:" + mongoService.getLastUpdate("mongo"));
         }
     }
 }

@@ -8,6 +8,7 @@ public class PayloadMongo {
     private Source source;
     private String op;
     private long ts_ms;
+    private String id;
 
     public String getBefore() {
         return this.before;
@@ -47,5 +48,13 @@ public class PayloadMongo {
 
     public void setTs_ms(long ts_ms) {
         this.ts_ms = ts_ms;
+    }
+
+    public String getId() {
+        return this.id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 }
