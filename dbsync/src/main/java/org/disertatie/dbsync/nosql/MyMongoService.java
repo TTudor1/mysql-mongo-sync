@@ -2,10 +2,8 @@ package org.disertatie.dbsync.nosql;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
-import org.disertatie.dbsync.common.Data;
-import org.disertatie.dbsync.common.event.Payload;
+import org.disertatie.dbsync.kafka.model.Payload;
 import org.disertatie.dbsync.nosql.model.UpdateStats;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -36,12 +34,6 @@ public class MyMongoService  {
         mongoTemplate.createCollection(schema);
     }
 
-    public void addData(String schema, Data data) {
-        for (Map<String, Object> row : data.getRows()) {
-            mongoTemplate.insert(row, schema);
-        }
-
-    }
 
     public void kafkaDataInsert(String schema, Payload data) {
         // System.out.println("CREATING in mongo" + data.getAfter().get("_id"));

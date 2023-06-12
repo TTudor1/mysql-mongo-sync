@@ -1,6 +1,4 @@
-package org.disertatie.dbsync.common.event;
-
-import org.disertatie.dbsync.common.Source;
+package org.disertatie.dbsync.kafka.model;
 
 public class PayloadMongo {
     private String before;

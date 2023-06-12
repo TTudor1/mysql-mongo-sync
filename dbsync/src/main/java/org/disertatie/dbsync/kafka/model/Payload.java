@@ -1,25 +1,37 @@
-package org.disertatie.dbsync.common;
+package org.disertatie.dbsync.kafka.model;
 
-public class CaputureKafkaMongoEvent {
-    private String before;
-    private String after;
+import java.util.Map;
+
+public class Payload {
+    private Map<String,Object> before;
+    private Map<String,Object> after;
     private Source source;
     private String op;
     private long ts_ms;
+    private String id;
 
-    public String getBefore() {
+
+    public String getId() {
+        return this.id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public Map<String,Object> getBefore() {
         return this.before;
     }
 
-    public void setBefore(String before) {
+    public void setBefore(Map<String,Object> before) {
         this.before = before;
     }
 
-    public String getAfter() {
+    public Map<String,Object> getAfter() {
         return this.after;
     }
 
-    public void setAfter(String after) {
+    public void setAfter(Map<String,Object> after) {
         this.after = after;
     }
 

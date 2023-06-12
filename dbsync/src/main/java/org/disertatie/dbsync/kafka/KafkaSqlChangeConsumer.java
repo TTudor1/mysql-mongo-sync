@@ -5,8 +5,8 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.disertatie.dbsync.common.event.CaputureKafkaEvent;
-import org.disertatie.dbsync.common.event.Payload;
+import org.disertatie.dbsync.kafka.model.CaputureKafkaEvent;
+import org.disertatie.dbsync.kafka.model.Payload;
 import org.disertatie.dbsync.nosql.MyMongoService;
 import org.disertatie.dbsync.sql.MySQLService;
 

@@ -70,11 +70,14 @@ class TestController {
     
     bulkOps.execute();
     String query = "select count(*) from " + "data_examplesql";
-    int res = 0;
+    Integer res = 0;
     while (res != 2000) {//
         // System.out.println(res);
         Thread.sleep(100);
         res = jdbcTemplate.queryForObject(query, Integer.class);
+        if (res == null) {
+            res = 0;
+        }
     }
     System.out.println("done done in " + (System.currentTimeMillis() - start));
     // Thread.sleep(400);
@@ -82,8 +85,6 @@ class TestController {
     return "done";
   }
 
-  
-  
   @GetMapping("/test3")
   //delete
   String all3() throws InterruptedException {
@@ -115,11 +116,14 @@ class TestController {
     
     bulkOps.execute();
     String query2 = "select count(*) from " + "data_examplesql";
-    int res = 0;
+    Integer res = 0;
     while (res != 2000) {//
         // System.out.println(res);
         Thread.sleep(100);
         res = jdbcTemplate.queryForObject(query2, Integer.class);
+        if (res == null) {
+            res = 0;
+        }
     }
     System.out.println("done done in " + (System.currentTimeMillis() - start));
     // Thread.sleep(400);
@@ -150,11 +154,14 @@ class TestController {
     
     bulkOps.execute();
     String query = "select count(*) from " + "data_examplesql";
-    int res = 0;
+    Integer res = 0;
     while (res != 2000) {//
         // System.out.println(res);
         Thread.sleep(100);
         res = jdbcTemplate.queryForObject(query, Integer.class);
+        if (res == null) {
+            res = 0;
+        }
     }
     System.out.println("done done in " + (System.currentTimeMillis() - start));
     // Thread.sleep(400);
@@ -194,8 +201,8 @@ class TestController {
     Thread.sleep(1000);
     collection.deleteMany(query);
 
-    String query2 = "select count(*) from " + "data_examplesql";
-    int res = 0;
+    // String query2 = "select count(*) from " + "data_examplesql";
+    // int res = 0;
     // while (res != 2000) {//
     //     // System.out.println(res);
     //     Thread.sleep(100);

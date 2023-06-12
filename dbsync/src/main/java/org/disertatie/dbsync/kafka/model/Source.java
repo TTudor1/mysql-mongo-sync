@@ -1,4 +1,4 @@
-package org.disertatie.dbsync.common;
+package org.disertatie.dbsync.kafka.model;
 
 public class Source {
     

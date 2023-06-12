@@ -1,4 +1,4 @@
-package org.disertatie.dbsync.common.event;
+package org.disertatie.dbsync.kafka.model;
 
 public class CaputureKafkaEventMongo {
     private Schema schema;

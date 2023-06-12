@@ -1,4 +1,4 @@
-package org.disertatie.dbsync.common.event;
+package org.disertatie.dbsync.kafka.model;
 
 import java.util.List;
 
