@@ -19,10 +19,12 @@ public class KafkaMongoChangeConsumer {
     
     MySQLService sqlService;
     MyMongoService mongoService;
+    String sqlTable;
 
-    public KafkaMongoChangeConsumer(MySQLService sqlService, MyMongoService mongoService) {
+    public KafkaMongoChangeConsumer(String sqlTable, MySQLService sqlService, MyMongoService mongoService) {
         this.sqlService = sqlService;
         this.mongoService = mongoService;
+        this.sqlTable = sqlTable;
     }
 
     public void consume(ConsumerRecord<String, String> kafkaPayload) {
@@ -61,7 +63,7 @@ public class KafkaMongoChangeConsumer {
             return;
         }
 
-        System.out.println("MONGO RECORD CHANGE (apl to sql) id=" + payloadKey.getPayload().getId() + " " + payloadValue.getPayload().getOp());
+        System.out.println("MONGO RECORD CHANGE (apl to sql) table:" + "" + "id=" + payloadKey.getPayload().getId() + " " + payloadValue.getPayload().getOp());
 
         Map<String, Object> beforeMap = (Map<String, Object>) before;
         Map<String, Object> afterMap = (Map<String, Object>) after;
@@ -79,23 +81,24 @@ public class KafkaMongoChangeConsumer {
             afterMap.remove("_class");
         }
         
-
         if (payloadValue.getPayload().getTs_ms() >= mongoService.getLastUpdate("sql")) {
             switch (payloadValue.getPayload().getOp()) {
                 case "c": //create
-                    sqlService.insertRecord("data_examplesql", afterMap);
+                    sqlService.insertRecord(sqlTable, afterMap);
                     break;
                 case "r": //read - only when doing snapshot due to topic errors
                     break; //noop
                 case "u": //update
                     if (!Objects.deepEquals(afterMap, beforeMap)) {
-                        sqlService.updateRecord("data_examplesql", afterMap);
+                        sqlService.updateRecord(sqlTable, afterMap);
                     }
                     break;
                 case "d": //delete
                     if (payloadKey != null) {
-                        sqlService.deleteRecord("data_examplesql", payloadKey.getPayload().getId());
+                        sqlService.deleteRecord(sqlTable, payloadKey.getPayload().getId());
                     }
+                    break;
+                default:
                     break;
             }
         }

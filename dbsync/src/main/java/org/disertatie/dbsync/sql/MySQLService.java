@@ -11,6 +11,7 @@ import org.disertatie.dbsync.common.Data;
 import org.disertatie.dbsync.common.Schema;
 import org.disertatie.dbsync.nosql.MyMongoService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
@@ -79,7 +80,11 @@ public class MySQLService {
         String vals = values.values().stream().map(v -> v.toString()).reduce("", (a, b) -> a + "'" + b + "',");
         
         query = "insert into " + tableName + " (" + removeLastChar(keys) + ") values (" + removeLastChar(vals) + ")";
-        jdbcTemplate.execute(query);
+        try {
+            jdbcTemplate.execute(query);
+        } catch (DataIntegrityViolationException e) {
+            System.out.println("Foreign key constraint failure");
+        }
     }
 
     public void updateRecord(String tableName, Map<String,Object> values) {
@@ -97,7 +102,11 @@ public class MySQLService {
         String vals = values.keySet().stream().map(v -> v + " = '" + values.get(v) + "'").reduce("", (a, v) -> a + v + ",");
                         
         query = "update " + tableName + " set " + removeLastChar(vals) + " where id = " + values.get("id");
-        jdbcTemplate.execute(query);
+        try {
+            jdbcTemplate.execute(query);
+        } catch (DataIntegrityViolationException e) {
+            System.out.println("Foreign key constraint failure");
+        }
     }
 
     public void deleteRecord(String tableName, String id) {
@@ -114,7 +123,11 @@ public class MySQLService {
         }
         
         query = "delete from " + tableName + " where id =" + id;
-        jdbcTemplate.execute(query);
+        try {
+            jdbcTemplate.execute(query);
+        } catch (DataIntegrityViolationException e) {
+            System.out.println("Foreign key constraint failure");
+        }
     }
 
     public static String removeLastChar(String s) {

@@ -15,15 +15,16 @@ import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-// @Service
 public class KafkaSqlChangeConsumer {
 
     MySQLService sqlService;
     MyMongoService mongoService;
+    String collectionName;
 
-    public KafkaSqlChangeConsumer(MySQLService sqlService, MyMongoService mongoService) {
+    public KafkaSqlChangeConsumer(String collectionName, MySQLService sqlService, MyMongoService mongoService) {
         this.sqlService = sqlService;
         this.mongoService = mongoService;
+        this.collectionName = collectionName;
     }
 
     public void consume(ConsumerRecord<String, String> kafkaPayload) {
@@ -74,17 +75,17 @@ public class KafkaSqlChangeConsumer {
         if (payload.getTs_ms() >= mongoService.getLastUpdate("mongo")) {
             switch (payload.getOp()) {
                 case "c": //create
-                mongoService.kafkaDataInsert("data_examplesql", payload);
+                mongoService.kafkaDataInsert(collectionName, payload);
                     break;
                 case "r": //read - only when doing snapshot due to topic errors
                     break; //noop
                 case "u": //update
                     if (!Objects.deepEquals(payload.getAfter(), payload.getBefore())) {
-                        mongoService.kafkaDataUpdate("data_examplesql", payload);
+                        mongoService.kafkaDataUpdate(collectionName, payload);
                     }
                     break;
                 case "d": //delete
-                mongoService.kafkaDataDelete("data_examplesql", payload);
+                mongoService.kafkaDataDelete(collectionName, payload);
                     break;
             }
             mongoService.setLastUpdate(payload.getTs_ms(), "mongo");

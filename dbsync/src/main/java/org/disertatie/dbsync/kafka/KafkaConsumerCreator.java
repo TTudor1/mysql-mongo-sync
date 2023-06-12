@@ -30,9 +30,12 @@ import org.springframework.scheduling.annotation.Scheduled;
 @Service
 public class KafkaConsumerCreator {
 
-    String filePath = "C:\\Users\\turtu\\Desktop\\a.txt";
     Properties properties = new Properties();
     KafkaConsumer kafkaConsumer;
+    String sqlTopicPrefix = "trt";
+    String sqlDbName = "db_example";
+    String mongoTopicPrefix = "trt2";
+    String mongoDbName = "test";
 
     @Autowired
     public KafkaConsumerCreator(MySQLService sqlService, MyMongoService mongoService) {
@@ -42,7 +45,6 @@ public class KafkaConsumerCreator {
         properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         properties.put("group.id", "test-group");
 
-        // Create the AdminClient instance
         try (AdminClient adminClient = AdminClient.create(properties)) {
             // Get the list of topics
             ListTopicsResult topicsResult = adminClient.listTopics();
@@ -52,13 +54,14 @@ public class KafkaConsumerCreator {
             java.util.Map<String, TopicListing> topics = topicsFuture.get();
 
             // Print the list of topics
-            System.out.println("---------------------------------------------------");
-            System.out.println("List of topics:");
+            StringBuilder sb = new StringBuilder();
+            String tblOrColName = "";
             for (String topic : topics.keySet()) {
-                if (topic.startsWith("trt.")) { // data_
-                    if (topic.startsWith("trt.db_example.data_examplesql") && !topic.contains("_seq")) {
-                        System.out.println("found sql: " + topic);
-                        KafkaSqlChangeConsumer sqlChangeConsumer = new KafkaSqlChangeConsumer(sqlService, mongoService);
+                if (topic.startsWith(sqlTopicPrefix)) { 
+                    if (topic.startsWith(sqlTopicPrefix + "." + sqlDbName) && isNotExcluded(topic)) {
+                        tblOrColName = topic.replace(sqlTopicPrefix, "").replace(sqlDbName, "").replace(".", "");
+                       sb.append("found sql table: " + tblOrColName).append("\n");
+                        KafkaSqlChangeConsumer sqlChangeConsumer = new KafkaSqlChangeConsumer(tblOrColName, sqlService, mongoService);
                         CustomConsumer c = new CustomConsumer();
                         Thread thread = new Thread(new Runnable() {
                             @Override
@@ -69,10 +72,11 @@ public class KafkaConsumerCreator {
                         thread.start();
                     }
                 }
-                if (topic.startsWith("trt2.")) {
-                    if(topic.startsWith("trt2.test.data") && !topic.contains("_seq")) {
-                        System.out.println("found mongo: " + topic);
-                        KafkaMongoChangeConsumer mongoChangeConsumer = new KafkaMongoChangeConsumer(sqlService, mongoService);
+                if (topic.startsWith(mongoTopicPrefix)) {
+                    if(topic.startsWith(mongoTopicPrefix + "." + mongoDbName) && isNotExcluded(topic)) {
+                        tblOrColName = topic.replace(mongoTopicPrefix, "").replace(mongoDbName, "").replace(".", "");
+                        sb.append("found mongo collection: " + tblOrColName).append("\n");
+                        KafkaMongoChangeConsumer mongoChangeConsumer = new KafkaMongoChangeConsumer(tblOrColName, sqlService, mongoService);
                         CustomConsumer c = new CustomConsumer();
                         Thread thread = new Thread(new Runnable() {
                             @Override
@@ -84,6 +88,9 @@ public class KafkaConsumerCreator {
                     }
                 }
             }
+            System.out.println("List of topics:");
+            System.out.println("---------------------------------------------------");
+            System.out.println(sb.toString());
             System.out.println("---------------------------------------------------");
 
         } catch (InterruptedException | ExecutionException e) {
@@ -92,36 +99,7 @@ public class KafkaConsumerCreator {
 
     }
 
-    // @Scheduled(fixedRate = 8000)
-    // public void pollKafka() {
-    //     try {
-    //         ConsumerRecords records = kafkaConsumer.poll(2000);
-    //         records.forEach(xrecord -> {
-    //             ConsumerRecord record = (ConsumerRecord) xrecord;
-    //             System.out.println("WORKS!");
-
-    //             try {
-    //                 BufferedWriter writer = new BufferedWriter(new FileWriter(filePath, true));
-    //                 writer.newLine();
-    //                 writer.write(record.toString());
-    //                 writer.write(record.toString());
-    //                 writer.close();
-    //             } catch (Throwable e) {
-    //                 System.out.println(e.getMessage());
-    //             }
-    //         });
-    //     } catch (Throwable e) {
-    //         System.out.println(e.getMessage());
-    //         kafkaConsumer.close();
-    //     } finally {
-    //     }
-
-    //     System.out.println("End KAFKA Poll");
-    // }
-    
-    // @PreDestroy
-    // public void destroy() {
-    //     System.out.println("Callback triggered - @PreDestroy.");
-    //       kafkaConsumer.close();
-    // }
+    private boolean isNotExcluded(String topic) {
+        return !topic.contains("_seq")  && !topic.contains("updateStats");
+    }
 }
