@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.disertatie.dbsync.common.Data;
 import org.disertatie.dbsync.common.Schema;
+import org.disertatie.dbsync.nosql.MyMongoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -24,6 +25,8 @@ public class MySQLService {
     // private DataExampleSQLRepository repository;
     @Autowired
     private JdbcTemplate jdbcTemplate;
+    @Autowired
+    private MyMongoService mongoService;
     
     public List<String> getTables() {
         return jdbcTemplate.queryForList("SHOW TABLES", String.class);
@@ -58,6 +61,9 @@ public class MySQLService {
     }
 
     public void insertRecord(String tableName, Map<String,Object> values) {
+        if (!mongoService.existsWithId((int)values.get("id"), tableName)) {
+            return;
+        }
         String query = "select id from " + tableName + " where id = '" + values.get("id") + "'";
         List<Object> res = jdbcTemplate.query(query, new RowMapper<Object>(){
             @Override

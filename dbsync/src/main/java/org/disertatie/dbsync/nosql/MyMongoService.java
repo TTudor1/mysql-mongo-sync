@@ -44,7 +44,7 @@ public class MyMongoService  {
     }
 
     public void kafkaDataInsert(String schema, Payload data) {
-        System.out.println("CREATING in mongo" + data.getAfter().get("_id"));
+        // System.out.println("CREATING in mongo" + data.getAfter().get("_id"));
         Object result = mongoTemplate.findById(data.getAfter().get("_id"), Object.class, schema);
         if (result == null) {
             mongoTemplate.insert(data.getAfter(), data.getSource().getTable());
@@ -56,7 +56,7 @@ public class MyMongoService  {
     }
 
     public void kafkaDataDelete(String schema, Payload data) {
-        System.out.println("DELETING in mongo" + data.getBefore().get("_id"));
+        // System.out.println("DELETING in mongo" + data.getBefore().get("_id"));
         Object result = mongoTemplate.findById(data.getBefore().get("_id"), Object.class, schema);
         if (result != null) {
             mongoTemplate.remove(data.getBefore(), data.getSource().getTable());
@@ -89,6 +89,10 @@ public class MyMongoService  {
         statsRepository.save(mongoStats);
     }
 
+    public boolean existsWithId(int id, String schema) {
+        Object result = mongoTemplate.findById(id, Object.class, schema);
+        return result != null;
+    }
     // public void test() {
     //     DataExample ex = new DataExample(null, "asd", 123);
     //     // repository.insert(ex);

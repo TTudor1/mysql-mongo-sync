@@ -5,32 +5,29 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.disertatie.dbsync.common.DeserializerProvider;
 import org.disertatie.dbsync.common.event.CaputureKafkaEvent;
 import org.disertatie.dbsync.common.event.Payload;
 import org.disertatie.dbsync.nosql.MyMongoService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.stereotype.Service;
+import org.disertatie.dbsync.sql.MySQLService;
 
 import com.fasterxml.jackson.core.exc.StreamReadException;
 import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-@Service
+// @Service
 public class KafkaSqlChangeConsumer {
 
-    @Autowired
+    MySQLService sqlService;
     MyMongoService mongoService;
-    @Autowired
-    DeserializerProvider serde;
 
-    private static final String prefix = "trt";
-    @KafkaListener(topics = prefix + ".db_example.data_examplesql", groupId = "test-group")
+    public KafkaSqlChangeConsumer(MySQLService sqlService, MyMongoService mongoService) {
+        this.sqlService = sqlService;
+        this.mongoService = mongoService;
+    }
+
     public void consume(ConsumerRecord<String, String> kafkaPayload) {
 
-        System.out.println("--------DETECTED SQL RECORD CHANGE--------");
         byte[] payloadValueBytes =  kafkaPayload.value() == null ? null :  kafkaPayload.value().getBytes();
         ObjectMapper mapper = new ObjectMapper()
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -55,10 +52,13 @@ public class KafkaSqlChangeConsumer {
         if (payloadValue == null) {
             return;
         }
+        if (payloadKey == null) {
+            return;
+        }
+
         Payload payload = payloadValue.getPayload();
         
-        System.out.println("id=" + payloadKey.getPayload().getId() + " " + payload.getOp());
-        // System.out.println(test.getTs_ms() + " " + test.getOp());
+        System.out.println("SQL RECORD CHANGE (apl to mongo) id=" + payloadKey.getPayload().getId() + " " + payload.getOp());
 
         if(payload.getBefore() != null) {
             Integer id = (Integer) payload.getBefore().get("id");
@@ -66,7 +66,7 @@ public class KafkaSqlChangeConsumer {
                 payload.getBefore().remove("id");
         }
         if(payload.getAfter() != null) {
-            Integer id = (Integer)((Map)payload.getAfter()).get("id");
+            Integer id = (Integer)((Map<String,Object>)payload.getAfter()).get("id");
             payload.getAfter().put("_id", id);
             payload.getAfter().remove("id");
         }
