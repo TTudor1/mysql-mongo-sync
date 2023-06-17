@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import org.disertatie.dbsync.nosql.MyMongoService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.lang.Nullable;
@@ -25,7 +24,8 @@ public class MySQLService {
     }
 
     public void insertRecord(String tableName, Map<String,Object> values) {
-        if (!mongoService.existsWithId((int)values.get("id"), tableName)) {
+        int id = (int)values.get("id");
+        if (!mongoService.existsWithId(id, tableName)) {
             return;
         }
         String query = "select id from " + tableName + " where id = '" + values.get("id") + "'";
@@ -43,15 +43,14 @@ public class MySQLService {
         String vals = values.values().stream().map(v -> v.toString()).reduce("", (a, b) -> a + "'" + b + "',");
         
         query = "insert into " + tableName + " (" + removeLastChar(keys) + ") values (" + removeLastChar(vals) + ")";
-        try {
-            jdbcTemplate.execute(query);
-        } catch (DataIntegrityViolationException e) {
-            System.out.println("Foreign key constraint failure");
-        }
+
+        jdbcTemplate.execute(query);
+
     }
 
     public void updateRecord(String tableName, Map<String,Object> values) {
-        String query = "select id from " + tableName + " where id = '" + values.get("id") + "'";
+        String id = (String)values.get("id");
+        String query = "select id from " + tableName + " where id = '" + id + "'";
         List<Object> res = jdbcTemplate.query(query, new RowMapper<Object>(){
             @Override
             @Nullable
@@ -64,12 +63,9 @@ public class MySQLService {
         }
         String vals = values.keySet().stream().map(v -> v + " = '" + values.get(v) + "'").reduce("", (a, v) -> a + v + ",");
                         
-        query = "update " + tableName + " set " + removeLastChar(vals) + " where id = " + values.get("id");
-        try {
-            jdbcTemplate.execute(query);
-        } catch (DataIntegrityViolationException e) {
-            System.out.println("Foreign key constraint failure");
-        }
+        query = "update " + tableName + " set " + removeLastChar(vals) + " where id = " + id;
+
+        jdbcTemplate.execute(query);
     }
 
     public void deleteRecord(String tableName, String id) {
@@ -86,11 +82,8 @@ public class MySQLService {
         }
         
         query = "delete from " + tableName + " where id =" + id;
-        try {
-            jdbcTemplate.execute(query);
-        } catch (DataIntegrityViolationException e) {
-            System.out.println("Foreign key constraint failure");
-        }
+
+        jdbcTemplate.execute(query);
     }
 
     public static String removeLastChar(String s) {

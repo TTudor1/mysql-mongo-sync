@@ -1,11 +1,11 @@
 package org.disertatie.dbsync.nosql;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.disertatie.dbsync.kafka.model.Payload;
 import org.disertatie.dbsync.nosql.model.UpdateStats;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
 
@@ -26,20 +26,15 @@ public class MyMongoService  {
         this.mongoTemplate = mongoTemplate;
     }
 
-    public List<String> getCollections() {
-        return new ArrayList<>(mongoTemplate.getCollectionNames());
-    }
-
-    public void createCollection(String schema) {
-        mongoTemplate.createCollection(schema);
-    }
-
-
     public void kafkaDataInsert(String schema, Payload data) {
         // System.out.println("CREATING in mongo" + data.getAfter().get("_id"));
         Object result = mongoTemplate.findById(data.getAfter().get("_id"), Object.class, schema);
         if (result == null) {
+            try {
             mongoTemplate.insert(data.getAfter(), data.getSource().getTable());
+            } catch (DuplicateKeyException e) {
+                System.out.println("Duplicate key exception for id " + data.getAfter().get("_id") + " for collection " + schema);
+            }
         }
     }
     
@@ -84,23 +79,5 @@ public class MyMongoService  {
     public boolean existsWithId(int id, String schema) {
         Object result = mongoTemplate.findById(id, Object.class, schema);
         return result != null;
-    }
-    // public void test() {
-    //     DataExample ex = new DataExample(null, "asd", 123);
-    //     // repository.insert(ex);
-        
-    //     String map = "function() { for (var key in this) { emit(key, null); } }";
-    //     String reduce = "function(key, values) { return null; }";
-
-    //     MongoIterable<String> collections = mongoTemplate.getDb().listCollectionNames();
-    //     for (String s : collections) {
-    //         System.out.println(s);
-    //         MapReduceResults<Document> out = mongoTemplate.mapReduce(s, map,reduce, Document.class);        
-    //         for (Document result : out) {
-    //             ;
-    //             System.out.println(result.get("_id"));
-    //         }
-    //     }
-    // }
-    
+    }   
 }

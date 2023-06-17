@@ -8,6 +8,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.disertatie.dbsync.kafka.model.CaputureKafkaEventMongo;
 import org.disertatie.dbsync.nosql.MyMongoService;
 import org.disertatie.dbsync.sql.MySQLService;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import com.fasterxml.jackson.core.exc.StreamReadException;
 import com.fasterxml.jackson.databind.DatabindException;
@@ -20,6 +21,7 @@ public class KafkaMongoChangeConsumer {
     MySQLService sqlService;
     MyMongoService mongoService;
     String sqlTable;
+    private int MAX_ATTEMPTS = 5;
 
     public KafkaMongoChangeConsumer(String sqlTable, MySQLService sqlService, MyMongoService mongoService) {
         this.sqlService = sqlService;
@@ -27,7 +29,7 @@ public class KafkaMongoChangeConsumer {
         this.sqlTable = sqlTable;
     }
 
-    public void consume(ConsumerRecord<String, String> kafkaPayload) {
+    public void consume(ConsumerRecord<String, String> kafkaPayload) throws InterruptedException {
         byte[] payloadValueBytes =  kafkaPayload.value() == null ? null :  kafkaPayload.value().getBytes();
         ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
   
@@ -63,7 +65,7 @@ public class KafkaMongoChangeConsumer {
             return;
         }
 
-        System.out.println("MONGO RECORD CHANGE (apl to sql) table:" + "" + "id=" + payloadKey.getPayload().getId() + " " + payloadValue.getPayload().getOp());
+        System.out.println("MONGO RECORD CHANGE (apl to sql) table:" + sqlTable + "id=" + payloadKey.getPayload().getId() + " " + payloadValue.getPayload().getOp());
 
         Map<String, Object> beforeMap = (Map<String, Object>) before;
         Map<String, Object> afterMap = (Map<String, Object>) after;
@@ -82,6 +84,24 @@ public class KafkaMongoChangeConsumer {
         }
         
         if (payloadValue.getPayload().getTs_ms() >= mongoService.getLastUpdate("sql")) {
+            boolean success = false;
+            int attempt = 0;
+            do {
+                try {
+                    attempt++;
+                    attemptOperation(payloadValue, payloadKey, beforeMap, afterMap ); 
+                    success = true;
+                } catch (DataIntegrityViolationException e) {
+                    System.out.println("Attempt " + attempt + "Foreign key constraint failure in table " 
+                    + sqlTable +" id:" + payloadKey.getPayload().getId());
+                    Thread.sleep(1000*(int)Math.pow(2, attempt));
+                    // e.printStackTrace();
+                }
+            } while (!success && attempt < MAX_ATTEMPTS);
+        }
+    }
+    
+    private void attemptOperation(CaputureKafkaEventMongo payloadValue, CaputureKafkaEventMongo payloadKey, Map<String, Object> beforeMap, Map<String, Object> afterMap ) {
             switch (payloadValue.getPayload().getOp()) {
                 case "c": //create
                     sqlService.insertRecord(sqlTable, afterMap);
@@ -101,6 +121,5 @@ public class KafkaMongoChangeConsumer {
                 default:
                     break;
             }
-        }
     }
 }

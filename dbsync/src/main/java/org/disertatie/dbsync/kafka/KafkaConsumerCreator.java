@@ -59,7 +59,8 @@ public class KafkaConsumerCreator {
             for (String topic : topics.keySet()) {
                 if (topic.startsWith(sqlTopicPrefix)) { 
                     if (topic.startsWith(sqlTopicPrefix + "." + sqlDbName) && isNotExcluded(topic)) {
-                        tblOrColName = topic.replace(sqlTopicPrefix, "").replace(sqlDbName, "").replace(".", "");
+                        tblOrColName = topic.replaceFirst(sqlTopicPrefix, "")
+                            .replaceFirst(sqlDbName, "").replace(".", "");
                        sb.append("found sql table: " + tblOrColName).append("\n");
                         KafkaSqlChangeConsumer sqlChangeConsumer = new KafkaSqlChangeConsumer(tblOrColName, sqlService, mongoService);
                         CustomConsumer c = new CustomConsumer();
@@ -74,7 +75,8 @@ public class KafkaConsumerCreator {
                 }
                 if (topic.startsWith(mongoTopicPrefix)) {
                     if(topic.startsWith(mongoTopicPrefix + "." + mongoDbName) && isNotExcluded(topic)) {
-                        tblOrColName = topic.replace(mongoTopicPrefix, "").replace(mongoDbName, "").replace(".", "");
+                        tblOrColName = topic.replaceFirst(mongoTopicPrefix, "")
+                            .replaceFirst(mongoDbName, "").replace(".", "");
                         sb.append("found mongo collection: " + tblOrColName).append("\n");
                         KafkaMongoChangeConsumer mongoChangeConsumer = new KafkaMongoChangeConsumer(tblOrColName, sqlService, mongoService);
                         CustomConsumer c = new CustomConsumer();

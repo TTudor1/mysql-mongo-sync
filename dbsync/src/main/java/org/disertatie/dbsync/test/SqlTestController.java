@@ -10,8 +10,9 @@ import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.BulkOperations;
-import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.BulkOperations.BulkMode;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,38 +20,38 @@ import org.springframework.web.bind.annotation.RestController;
 import com.mongodb.client.MongoCollection;
 
 @RestController
-class TestController {
-
+public class SqlTestController {
+    
+    
 	@Autowired
-	MongoTemplate mongoTemplate;
+	private MongoTemplate mongoTemplate;
 	@Autowired
     private JdbcTemplate jdbcTemplate;
 
-  @GetMapping("/test")
-  String all() throws InterruptedException {
-    for (int i = 0; i < 1; i++) {
-        int randid = 220 + new Random().nextInt(6000);
-		Map<String,Object> entity = new HashMap<>();
-        List<Map<String, Object>> rows = new ArrayList<>();
-		entity.put("_id", randid);
-		entity.put("quantity", 12);
-		entity.put("name", "Tud");
-        long start = System.currentTimeMillis();
-		mongoTemplate.insert(entity, "data_examplesql");
 
-		String query = "select * from " + "data_examplesql where id ='" + randid +"'";
-        while (rows.size() == 0) {
-            rows = jdbcTemplate.queryForList(query);
+  @GetMapping("/testSqlInsertDelay")
+  String all() throws InterruptedException {
+    for (int i = 0; i < 10; i++) {
+        int randid = 220 + new Random().nextInt(6000);
+		String query = "insert into client id ='" + randid +"' + CNP = '"+ randid + "'";
+        long start = System.currentTimeMillis();
+        jdbcTemplate.execute(query);
+
+		Query q = new Query();
+
+		long count = mongoTemplate.count(q, "client");
+        while (count == 0) {
+            count = mongoTemplate.count(q, "client");
             Thread.sleep(5);
         }
-        System.out.println("done done in " + (System.currentTimeMillis() - start));
+        System.out.println("done in " + (System.currentTimeMillis() - start));
 		Thread.sleep(400);
 
     }
     return "done";
   }
 
-  @GetMapping("/test2")
+  @GetMapping("/testSqlBulkInsert")
   String all2() throws InterruptedException {
     List<Map<String, Object>> objects = new ArrayList<>();
     for (int j = 0; j < 2000; j++) {
@@ -85,7 +86,7 @@ class TestController {
     return "done";
   }
 
-  @GetMapping("/test3")
+  @GetMapping("/testSqlDelete")
   //delete
   String all3() throws InterruptedException {
     List<Map<String, Object>> objects = new ArrayList<>();
@@ -132,7 +133,7 @@ class TestController {
   }
 
   
-  @GetMapping("/test4")
+  @GetMapping("/testSqlUpdate")
   String all4() throws InterruptedException {
     //aici trebe update
     List<Map<String, Object>> objects = new ArrayList<>();
@@ -169,7 +170,7 @@ class TestController {
     return "done";
   }
 
-  @GetMapping("/testCreateDelete")
+  @GetMapping("/testSqlCreateDelete")
   //test create + delete
   String all5() throws InterruptedException {
     List<Map<String, Object>> objects = new ArrayList<>();
@@ -213,6 +214,5 @@ class TestController {
 
     return "done";
   }
-
 
 }

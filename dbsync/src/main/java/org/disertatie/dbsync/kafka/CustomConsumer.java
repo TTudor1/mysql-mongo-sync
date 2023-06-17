@@ -38,7 +38,11 @@ public class CustomConsumer {
                     if (noop) {
                         noopConsumer.consume(record);
                     } else {
-                        mongoChangeConsumer.consume(record);
+                        try {
+                            mongoChangeConsumer.consume(record);
+                        } catch (InterruptedException e) {
+                            System.out.println("Thread interrupted");
+                        }
                     }
                 }
 
@@ -74,7 +78,11 @@ public class CustomConsumer {
                     if (noop) {
                         noopConsumer.consume(record);
                     } else {
-                        sqlChangeConsumer.consume(record);
+                        try {
+                            sqlChangeConsumer.consume(record);
+                        } catch (InterruptedException e) {
+                            System.out.println("Thread interrupted");
+                        }
                     }
                 }
 
