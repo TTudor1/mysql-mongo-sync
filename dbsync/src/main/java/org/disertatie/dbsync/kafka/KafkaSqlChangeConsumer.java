@@ -16,12 +16,13 @@ import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class KafkaSqlChangeConsumer {
+public class KafkaSqlChangeConsumer implements KafkaChangeConsumer {
 
     MySQLService sqlService;
     MyMongoService mongoService;
     String collectionName;
     private int MAX_ATTEMPTS = 3;
+    boolean debug = false;
 
     public KafkaSqlChangeConsumer(String collectionName, MySQLService sqlService, MyMongoService mongoService) {
         this.sqlService = sqlService;
@@ -61,8 +62,9 @@ public class KafkaSqlChangeConsumer {
 
         Payload payload = payloadValue.getPayload();
         
-        System.out.println("SQL RECORD CHANGE (apl to mongo) table:" + collectionName + "id=" + payloadKey.getPayload().getId() + " " + payload.getOp());
-
+        if (debug) {
+            System.out.println("SQL RECORD CHANGE (apl to mongo) table:" + collectionName + "id=" + payloadKey.getPayload().getId() + " " + payload.getOp());
+        }
         if(payload.getBefore() != null) {
             Integer id = (Integer) payload.getBefore().get("id");
                 payload.getBefore().put("_id", id);

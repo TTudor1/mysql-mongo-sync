@@ -16,12 +16,13 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @SuppressWarnings("unchecked")
-public class KafkaMongoChangeConsumer {
+public class KafkaMongoChangeConsumer implements KafkaChangeConsumer {
     
     MySQLService sqlService;
     MyMongoService mongoService;
     String sqlTable;
     private int MAX_ATTEMPTS = 5;
+    private boolean debug = false;
 
     public KafkaMongoChangeConsumer(String sqlTable, MySQLService sqlService, MyMongoService mongoService) {
         this.sqlService = sqlService;
@@ -64,9 +65,10 @@ public class KafkaMongoChangeConsumer {
         if (payloadKey == null) {
             return;
         }
-
-        System.out.println("MONGO RECORD CHANGE (apl to sql) table:" + sqlTable + "id=" + payloadKey.getPayload().getId() + " " + payloadValue.getPayload().getOp());
-
+        if (debug) {
+            System.out.println("MONGO RECORD CHANGE (apl to sql) table:" + sqlTable + "id=" + payloadKey.getPayload().getId() + " " + payloadValue.getPayload().getOp());
+        }
+        
         Map<String, Object> beforeMap = (Map<String, Object>) before;
         Map<String, Object> afterMap = (Map<String, Object>) after;
 

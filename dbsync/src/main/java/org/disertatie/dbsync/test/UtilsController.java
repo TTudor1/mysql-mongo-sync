@@ -19,9 +19,9 @@ public class UtilsController {
       @GetMapping("/reset")
   String all() throws InterruptedException {
     Query q = new Query();
-    mongoTemplate.remove(q, "bilet");
-    mongoTemplate.remove(q, "zbor");
-    mongoTemplate.remove(q, "client");
+    mongoTemplate.remove(q, "Bilet");
+    mongoTemplate.remove(q, "Zbor");
+    mongoTemplate.remove(q, "Client");
 
     jdbcTemplate.execute("delete from bilet where id != 9999");
     jdbcTemplate.execute("delete from zbor where id != 9999");

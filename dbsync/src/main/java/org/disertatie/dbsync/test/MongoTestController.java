@@ -6,17 +6,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import org.bson.Document;
-import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.data.mongodb.core.BulkOperations.BulkMode;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.mongodb.client.MongoCollection;
 
 @RestController
 class MongoTestController {
@@ -26,68 +25,130 @@ class MongoTestController {
 	@Autowired
     private JdbcTemplate jdbcTemplate;
 
+    private int[] tests = new int[] {2000, 1000, 500, 100, 60, 30};
+    private int[] finalCount = new int[] {2000, 3000, 3500, 3600, 3660, 3690};
+    private int[] finalCountForDelete = new int[] {1690, 690, 190, 90, 30, 0};
+
   @GetMapping("/testMongoInsertDelay")
   String all() throws InterruptedException {
-    for (int i = 0; i < 1; i++) {
-        int randid = 220 + new Random().nextInt(6000);
+    for (int i = 1; i <= 10; i++) {
+        int randid = 220 + new Random().nextInt(16000);
 		Map<String,Object> entity = new HashMap<>();
         List<Map<String, Object>> rows = new ArrayList<>();
 		entity.put("_id", randid);
-		entity.put("quantity", 12);
-		entity.put("name", "Tud");
+		entity.put("CNP", "12"+randid);
+		entity.put("Nume", "Tud");
+		mongoTemplate.insert(entity, "Client");
         long start = System.currentTimeMillis();
-		mongoTemplate.insert(entity, "data_examplesql");
 
-		String query = "select * from " + "data_examplesql where id ='" + randid +"'";
+		String query = "select * from " + "Client where id ='" + randid +"'";
         while (rows.size() == 0) {
             rows = jdbcTemplate.queryForList(query);
             Thread.sleep(5);
         }
         System.out.println("done in " + (System.currentTimeMillis() - start));
 		Thread.sleep(400);
-
     }
     return "done";
   }
 
   @GetMapping("/testMongoBulkInsert")
-  String all2() throws InterruptedException {
+  String testMongoBulkInsert() throws InterruptedException {
     List<Map<String, Object>> objects = new ArrayList<>();
-    for (int j = 0; j < 2000; j++) {
-        Map<String, Object> entity = new HashMap<>();
-        entity.put("_id", j);
-        entity.put("quantity", 12);
-        entity.put("name", "Tud");
-        objects.add(entity);
-    }
-    long start = System.currentTimeMillis();
-    
-    BulkOperations bulkOps = mongoTemplate.bulkOps(BulkMode.UNORDERED, "data_examplesql");
-    
-    for (Map<String, Object> document : objects) {
-        bulkOps.insert(document);
-    }
-    
-    bulkOps.execute();
-    String query = "select count(*) from " + "data_examplesql";
-    Integer res = 0;
-    while (res != 2000) {//
-        // System.out.println(res);
-        Thread.sleep(100);
-        res = jdbcTemplate.queryForObject(query, Integer.class);
-        if (res == null) {
-            res = 0;
+    int id = 0;
+    for (int i = 0; i < tests.length; i++) {
+        objects = new ArrayList<>();
+        for (int j = 0; j < tests[i]; j++) {
+            id++;
+            Map<String, Object> entity = new HashMap<>();
+            entity.put("_id", id);
+            entity.put("CNP", "193"+id);
+            entity.put("Nume", "Tudor");
+            objects.add(entity);
+        }        
+        BulkOperations bulkOps = mongoTemplate.bulkOps(BulkMode.UNORDERED, "Client");
+        for (Map<String, Object> document : objects) {
+            bulkOps.insert(document);
         }
+        bulkOps.execute();
+        long start = System.currentTimeMillis();
+        String query = "select count(*) from " + "Client";
+        Integer res = 0;
+        while (res != finalCount[i]) {
+            Thread.sleep(10);
+            res = jdbcTemplate.queryForObject(query, Integer.class);
+            if (res == null) {
+                res = 0;
+            }
+        }
+        System.out.println("done " + tests[i] + " in " + (System.currentTimeMillis() - start));
     }
-    System.out.println("done done in " + (System.currentTimeMillis() - start));
-    // Thread.sleep(400);
+    return "done";
+  }
 
+  @GetMapping("/testMongoUpdate")
+  String testMongoUpdate() throws InterruptedException {
+    int id = 0;
+    for (int i = 0; i < tests.length; i++) {
+        BulkOperations bulkOps = mongoTemplate.bulkOps(BulkMode.UNORDERED, "Client");
+        for (int j = 0; j < tests[i]; j++) {
+            id++;
+            Query query = new Query();
+            query.addCriteria(Criteria.where("_id").is(id));
+
+            Update update = new Update();
+            update.set("Nume", "Tudor1");
+            bulkOps.updateOne(query, update);
+        }
+        bulkOps.execute();
+
+        long start = System.currentTimeMillis();
+        String query = "select count(*) from " + "Client where Nume = 'Tudor1'";
+        Integer res = 0;
+        while (res != finalCount[i]) {
+            Thread.sleep(10);
+            res = jdbcTemplate.queryForObject(query, Integer.class);
+            if (res == null) {
+                res = 0;
+            }
+        }
+        System.out.println("done " + tests[i] + " in " + (System.currentTimeMillis() - start));
+    }
+    return "done";
+  }
+
+  @GetMapping("/testMongoDelete")
+  String testMongoDelete() throws InterruptedException {
+    int id = 0;
+    List<Integer> ids;
+    for (int i = 0; i < tests.length; i++) {
+        ids = new ArrayList<>();
+        for (int j = 1; j <= tests[i]; j++) {
+            id++;
+            ids.add(id);
+        }
+        Query query = Query.query(Criteria.where("_id").in(ids));
+        mongoTemplate.remove(query, "Client");
+
+        long start = System.currentTimeMillis();
+
+        String queryString = "select count(*) from " + "Client";
+        Integer res = -1;
+        while (res != finalCountForDelete[i]) {
+            Thread.sleep(10);
+            res = jdbcTemplate.queryForObject(queryString, Integer.class);
+            if (res == null) {
+                res = 0;
+            }
+        }
+        System.out.println("done " + tests[i] + " in " + (System.currentTimeMillis() - start));
+    }
     return "done";
   }
 
   static int testId = 3;
   @GetMapping("/testMongoFKInsert")
-  String testMongoLargeVolumeInsert() throws InterruptedException {
+  String testMongoFKInsert() throws InterruptedException {
     
     Map<String, Object> client = new HashMap<>();
     client.put("_id", testId);
@@ -112,135 +173,6 @@ class MongoTestController {
 
     System.out.println("done, res=" + res);
     testId++;
-    return "done";
-  }
-
-  @GetMapping("/testMongoDelete")
-  //delete
-  String all3() throws InterruptedException {
-    List<Map<String, Object>> objects = new ArrayList<>();
-    for (int j = 0; j < 2000; j++) {
-        Map<String, Object> entity = new HashMap<>();
-        entity.put("_id", j);
-        entity.put("quantity", 12);
-        entity.put("name", "Tud");
-        objects.add(entity);
-    }
-    long start = System.currentTimeMillis();
-    
-    BulkOperations bulkOps = mongoTemplate.bulkOps(BulkMode.UNORDERED, "data_examplesql");
-    
-    MongoCollection<Document> collection = mongoTemplate.getCollection("yourCollectionName");
-
-    // Define the range of IDs
-    int startId = 1;
-    int endId = 100;
-
-    // Build the query
-    Document query = new Document("_id", new Document("$gte", new ObjectId(Integer.toHexString(startId)))
-            .append("$lte", new ObjectId(Integer.toHexString(endId))));
-
-    // Delete the documents in the specified range
-    collection.deleteMany(query);
-
-    
-    bulkOps.execute();
-    String query2 = "select count(*) from " + "data_examplesql";
-    Integer res = 0;
-    while (res != 2000) {//
-        // System.out.println(res);
-        Thread.sleep(100);
-        res = jdbcTemplate.queryForObject(query2, Integer.class);
-        if (res == null) {
-            res = 0;
-        }
-    }
-    System.out.println("done done in " + (System.currentTimeMillis() - start));
-    // Thread.sleep(400);
-
-    return "done";
-  }
-
-  
-  @GetMapping("/testMongoUpdate")
-  String all4() throws InterruptedException {
-    //aici trebe update
-    List<Map<String, Object>> objects = new ArrayList<>();
-    for (int j = 0; j < 2000; j++) {
-        Map<String, Object> entity = new HashMap<>();
-        entity.put("_id", j);
-        entity.put("quantity", 12);
-        entity.put("name", "Tud");
-        objects.add(entity);
-    }
-    long start = System.currentTimeMillis();
-    
-    BulkOperations bulkOps = mongoTemplate.bulkOps(BulkMode.UNORDERED, "data_examplesql");
-    
-    for (Map<String, Object> document : objects) {
-        bulkOps.insert(document);
-
-    }
-    
-    bulkOps.execute();
-    String query = "select count(*) from " + "data_examplesql";
-    Integer res = 0;
-    while (res != 2000) {//
-        // System.out.println(res);
-        Thread.sleep(100);
-        res = jdbcTemplate.queryForObject(query, Integer.class);
-        if (res == null) {
-            res = 0;
-        }
-    }
-    System.out.println("done done in " + (System.currentTimeMillis() - start));
-    // Thread.sleep(400);
-
-    return "done";
-  }
-
-  @GetMapping("/testCreateDelete")
-  //test create + delete
-  String all5() throws InterruptedException {
-    List<Map<String, Object>> objects = new ArrayList<>();
-    for (int j = 1; j <= 900; j++) {
-        Map<String, Object> entity = new HashMap<>();
-        entity.put("_id", j);
-        entity.put("quantity", 12);
-        entity.put("name", "Tud");
-        objects.add(entity);
-    }
-    long start = System.currentTimeMillis();
-    
-    BulkOperations bulkOps = mongoTemplate.bulkOps(BulkMode.UNORDERED, "data_examplesql");
-    
-    for (Map<String, Object> document : objects) {
-        bulkOps.insert(document);
-    }
-    bulkOps.execute();
-    MongoCollection<Document> collection = mongoTemplate.getCollection("data_examplesql");
-    // Define the range of IDs
-    int startId = 1;
-    int endId = 900;
-
-    // Build the query
-    Document query = new Document("_id", new Document("$gte", startId)
-            .append("$lte",endId));
-
-    // Delete the documents in the specified range
-    Thread.sleep(1000);
-    collection.deleteMany(query);
-
-    // String query2 = "select count(*) from " + "data_examplesql";
-    // int res = 0;
-    // while (res != 2000) {//
-    //     // System.out.println(res);
-    //     Thread.sleep(100);
-    //     res = jdbcTemplate.queryForObject(query2, Integer.class);
-    // }
-    System.out.println("done done in " + (System.currentTimeMillis() - start));
-    // Thread.sleep(400);
-
     return "done";
   }
 

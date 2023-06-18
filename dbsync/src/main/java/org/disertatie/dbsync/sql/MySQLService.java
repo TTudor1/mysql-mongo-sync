@@ -49,7 +49,7 @@ public class MySQLService {
     }
 
     public void updateRecord(String tableName, Map<String,Object> values) {
-        String id = (String)values.get("id");
+        String id = ""+values.get("id");
         String query = "select id from " + tableName + " where id = '" + id + "'";
         List<Object> res = jdbcTemplate.query(query, new RowMapper<Object>(){
             @Override

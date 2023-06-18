@@ -17,6 +17,7 @@ public class MyMongoService  {
     
     private UpdateStatsRepository statsRepository;
     MongoTemplate mongoTemplate;
+    boolean debug = false;
 
     @Autowired
     public MyMongoService(UpdateStatsRepository statsRepository) {
@@ -31,22 +32,25 @@ public class MyMongoService  {
         Object result = mongoTemplate.findById(data.getAfter().get("_id"), Object.class, schema);
         if (result == null) {
             try {
-            mongoTemplate.insert(data.getAfter(), data.getSource().getTable());
+            mongoTemplate.insert(data.getAfter(), schema);
             } catch (DuplicateKeyException e) {
-                System.out.println("Duplicate key exception for id " + data.getAfter().get("_id") + " for collection " + schema);
+                if (debug) {
+                    System.out.println("Duplicate key exception for id " + 
+                    data.getAfter().get("_id") + " for collection " + schema);
+                }
             }
         }
     }
     
     public void kafkaDataUpdate(String schema, Payload data) {
-        mongoTemplate.save(data.getAfter(), data.getSource().getTable());
+        mongoTemplate.save(data.getAfter(), schema);
     }
 
     public void kafkaDataDelete(String schema, Payload data) {
         // System.out.println("DELETING in mongo" + data.getBefore().get("_id"));
         Object result = mongoTemplate.findById(data.getBefore().get("_id"), Object.class, schema);
         if (result != null) {
-            mongoTemplate.remove(data.getBefore(), data.getSource().getTable());
+            mongoTemplate.remove(data.getBefore(), schema);
         }
     }
 
