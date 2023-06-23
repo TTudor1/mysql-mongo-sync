@@ -41,7 +41,7 @@ public class SqlTestController {
 		long count = mongoTemplate.count(q, "Client");
         while (count != i) {
             count = mongoTemplate.count(q, "Client");
-            Thread.sleep(5);
+            Thread.sleep(15);
         }
         System.out.println("done in " + (System.currentTimeMillis() - start));
 		Thread.sleep(400);
@@ -73,7 +73,7 @@ public class SqlTestController {
         long count = mongoTemplate.count(q, "Client");
         while (count != finalCount[i]) {
             // System.out.println(count);
-            Thread.sleep(15);
+            Thread.sleep(30);
             count = mongoTemplate.count(q, "Client");
         }
         System.out.println("done " + tests[i] + " in " + (System.currentTimeMillis() - start));

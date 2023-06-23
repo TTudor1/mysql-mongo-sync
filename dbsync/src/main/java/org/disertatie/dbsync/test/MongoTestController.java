@@ -149,7 +149,6 @@ class MongoTestController {
   static int testId = 3;
   @GetMapping("/testMongoFKInsert")
   String testMongoFKInsert() throws InterruptedException {
-    
     Map<String, Object> client = new HashMap<>();
     client.put("_id", testId);
     client.put("CNP", "1913213213213"+testId);
