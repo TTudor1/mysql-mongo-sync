@@ -1,7 +1,7 @@
-# MySQL to NoSMongoDB Sync App
+# MySQL to NoSQL MongoDB Sync App
 
 ## Project Description
-This project facilitates the efficient synchronization between MySQL and NoSMongoDB databases. It is developed using Java and encompasses the code utilized in the tests featured in the paper titled "Implementing a Synchronization Method between a Relational and a Non-Relational Database".
+This project facilitates the efficient synchronization between MySQL and NoSQL MongoDB databases. It is developed using Java and encompasses the code utilized in the tests featured in the paper titled "Implementing a Synchronization Method between a Relational and a Non-Relational Database".
 
 ## How to Use
 
