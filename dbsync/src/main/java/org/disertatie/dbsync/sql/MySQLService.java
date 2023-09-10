@@ -24,71 +24,76 @@ public class MySQLService {
     }
 
     public void insertRecord(String tableName, Map<String,Object> values) {
-        int id = (int)values.get("id");
-        if (!mongoService.existsWithId(id, tableName)) {
-            return;
-        }
-        String query = "select id from " + tableName + " where id = '" + values.get("id") + "'";
-        List<Object> res = jdbcTemplate.query(query, new RowMapper<Object>(){
-            @Override
-            @Nullable
-            public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
-                return null;
-            }
-        });
-        if (!res.isEmpty()) {
-            return;
-        }
-        String keys = values.keySet().stream().reduce("", (a, b) -> a + b + ",");
-        String vals = values.values().stream().map(v -> v.toString()).reduce("", (a, b) -> a + "'" + b + "',");
-        
-        query = "insert into " + tableName + " (" + removeLastChar(keys) + ") values (" + removeLastChar(vals) + ")";
-
+      int id = (int)values.get("id");
+      
+      if (!mongoService.existsWithId(id, tableName)) {
+          return;
+      }
+      String query = "select id from " + tableName + " where id = '" + values.get("id") + "'";
+      List<Object> res = jdbcTemplate.query(query, new RowMapper<Object>(){
+          @Override
+          @Nullable
+          public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+              return null;
+          }
+      });
+      if (!res.isEmpty()) {
+        System.out.println("EERRRRRROOOORRRR6 " + id);
+          return;
+      }
+      String keys = values.keySet().stream().reduce("", (a, b) -> a + b + ",");
+      String vals = values.values().stream().map(v -> v.toString()).reduce("", (a, b) -> a + "'" + b + "',");
+      
+      query = "insert into " + tableName + " (" + removeLastChar(keys) + ") values (" + removeLastChar(vals) + ")";
+      try {
         jdbcTemplate.execute(query);
-
+      } catch (Exception e) {
+        System.out.println("Error inserting in " + tableName + " id " + values.get("id"));
+        throw e;
+      }
     }
 
     public void updateRecord(String tableName, Map<String,Object> values) {
-        String id = ""+values.get("id");
-        String query = "select id from " + tableName + " where id = '" + id + "'";
-        List<Object> res = jdbcTemplate.query(query, new RowMapper<Object>(){
-            @Override
-            @Nullable
-            public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
-                return null;
-            }
-        });
-        if (res.isEmpty()) {
-            return;
-        }
-        String vals = values.keySet().stream().map(v -> v + " = '" + values.get(v) + "'").reduce("", (a, v) -> a + v + ",");
-                        
-        query = "update " + tableName + " set " + removeLastChar(vals) + " where id = " + id;
+      String id = ""+values.get("id");
+      String query = "select id from " + tableName + " where id = '" + id + "'";
+      List<Object> res = jdbcTemplate.query(query, new RowMapper<Object>(){
+          @Override
+          @Nullable
+          public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+              return null;
+          }
+      });
+      if (res.isEmpty()) {
+          return;
+      }
+      String vals = values.keySet().stream().map(v -> v + " = '" + values.get(v) + "'").reduce("", (a, v) -> a + v + ",");
+                      
+      query = "update " + tableName + " set " + removeLastChar(vals) + " where id = " + id;
 
-        jdbcTemplate.execute(query);
+      jdbcTemplate.execute(query);
     }
 
     public void deleteRecord(String tableName, String id) {
-        String query = "select id from " + tableName + " where id = '" + id + "'";
-        List<Object> res = jdbcTemplate.query(query, new RowMapper<Object>(){
-            @Override
-            @Nullable
-            public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
-                return null;
-            }
-        });
-        if (res.isEmpty()) {
-            return;
-        }
-        
-        query = "delete from " + tableName + " where id =" + id;
+      String query = "select id from " + tableName + " where id = '" + id + "'";
+      List<Object> res = jdbcTemplate.query(query, new RowMapper<Object>(){
+          @Override
+          @Nullable
+          public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
+              return null;
+          }
+      });
+      if (res.isEmpty()) {
+          return;
+      }
+      
+      query = "delete from " + tableName + " where id =" + id;
 
-        jdbcTemplate.execute(query);
+      jdbcTemplate.execute(query);
     }
 
     public static String removeLastChar(String s) {
-        return (s == null || s.length() == 0)
-          ? null 
-          : (s.substring(0, s.length() - 1));
+      return (s == null || s.length() == 0)
+        ? null 
+        : (s.substring(0, s.length() - 1));
     }
 }

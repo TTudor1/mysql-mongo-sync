@@ -21,7 +21,7 @@ public class KafkaSqlChangeConsumer implements KafkaChangeConsumer {
     MySQLService sqlService;
     MyMongoService mongoService;
     String collectionName;
-    private int MAX_ATTEMPTS = 3;
+    private int MAX_ATTEMPTS = 5;
     boolean debug = false;
 
     public KafkaSqlChangeConsumer(String collectionName, MySQLService sqlService, MyMongoService mongoService) {
@@ -54,9 +54,11 @@ public class KafkaSqlChangeConsumer implements KafkaChangeConsumer {
             e.printStackTrace();
         }
         if (payloadValue == null) {
+            System.out.println("EERRRRRROOOORRRR1");
             return;
         }
         if (payloadKey == null) {
+            System.out.println("EERRRRRROOOORRRR2");
             return;
         }
 
@@ -76,7 +78,7 @@ public class KafkaSqlChangeConsumer implements KafkaChangeConsumer {
             payload.getAfter().remove("id");
         }
 
-        if (payload.getTs_ms() >= mongoService.getLastUpdate("mongo")) {
+        // if (payload.getTs_ms() >= mongoService.getLastUpdate("mongo")) {
             boolean success = false;
             int attempt = 0;
             do {
@@ -92,14 +94,15 @@ public class KafkaSqlChangeConsumer implements KafkaChangeConsumer {
                 }
             } while (!success && attempt < MAX_ATTEMPTS);
 
-        } else {
-            System.out.println("Message dropped tsms:" + payload.getTs_ms() + " dbTime:" + mongoService.getLastUpdate("mongo"));
-        }
+        // } else {
+        //     System.out.println("Message dropped tsms:" + payload.getTs_ms() + " dbTime:" + mongoService.getLastUpdate("mongo"));
+        // }
     }
 
     private void attemptOperation(Payload payload) {
             switch (payload.getOp()) {
                 case "c": //create
+                // System.out.println(collectionName + " " + payload.getAfter().get("_id"));
                 mongoService.kafkaDataInsert(collectionName, payload);
                     break;
                 case "r": //read - only when doing snapshot due to topic errors

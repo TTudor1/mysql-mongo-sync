@@ -28,18 +28,18 @@ public class MyMongoService  {
     }
 
     public void kafkaDataInsert(String schema, Payload data) {
-        // System.out.println("CREATING in mongo" + data.getAfter().get("_id"));
-        Object result = mongoTemplate.findById(data.getAfter().get("_id"), Object.class, schema);
-        if (result == null) {
-            try {
-            mongoTemplate.insert(data.getAfter(), schema);
-            } catch (DuplicateKeyException e) {
-                if (debug) {
-                    System.out.println("Duplicate key exception for id " + 
-                    data.getAfter().get("_id") + " for collection " + schema);
-                }
-            }
-        }
+      // System.out.println("CREATING in mongo" + data.getAfter().get("_id"));
+      Object result = mongoTemplate.findById(data.getAfter().get("_id"), Object.class, schema);
+      if (result == null) {
+          try {
+          mongoTemplate.insert(data.getAfter(), schema);
+          } catch (DuplicateKeyException e) {
+              if (debug) {
+                  System.out.println("Duplicate key exception for id " + 
+                  data.getAfter().get("_id") + " for collection " + schema);
+              }
+          }
+      }
     }
     
     public void kafkaDataUpdate(String schema, Payload data) {
@@ -47,41 +47,41 @@ public class MyMongoService  {
     }
 
     public void kafkaDataDelete(String schema, Payload data) {
-        // System.out.println("DELETING in mongo" + data.getBefore().get("_id"));
-        Object result = mongoTemplate.findById(data.getBefore().get("_id"), Object.class, schema);
-        if (result != null) {
-            mongoTemplate.remove(data.getBefore(), schema);
-        }
+      // System.out.println("DELETING in mongo" + data.getBefore().get("_id"));
+      Object result = mongoTemplate.findById(data.getBefore().get("_id"), Object.class, schema);
+      if (result != null) {
+          mongoTemplate.remove(data.getBefore(), schema);
+      }
     }
 
     public long getLastUpdate(String db) {
-        List<UpdateStats> allStats = statsRepository.findAll();
-        if (allStats.size() == 0) {
-            return 0;
-        }
-        UpdateStats mongoStats = allStats.stream().filter(s -> s.getDbName().equals(db)).findAny().orElse(null);
-        if (mongoStats == null) {
-            return 0;
-        } else {
-            return mongoStats.getLast();
-        }
+      List<UpdateStats> allStats = statsRepository.findAll();
+      if (allStats.size() == 0) {
+          return 0;
+      }
+      UpdateStats mongoStats = allStats.stream().filter(s -> s.getDbName().equals(db)).findAny().orElse(null);
+      if (mongoStats == null) {
+          return 0;
+      } else {
+          return mongoStats.getLast();
+      }
     }
 
     public void setLastUpdate(long updateTime, String db) {
-        List<UpdateStats> allStats = statsRepository.findAll();
-        UpdateStats mongoStats = allStats.stream().filter(s -> s.getDbName().equals(db)).findAny().orElse(null);
-        if (mongoStats == null) {
-            mongoStats = new UpdateStats();
-            mongoStats.setDbName(db);
-            mongoStats.setLast(updateTime);
-        } else {
-            mongoStats.setLast(updateTime);
-        }
-        statsRepository.save(mongoStats);
+      List<UpdateStats> allStats = statsRepository.findAll();
+      UpdateStats mongoStats = allStats.stream().filter(s -> s.getDbName().equals(db)).findAny().orElse(null);
+      if (mongoStats == null) {
+          mongoStats = new UpdateStats();
+          mongoStats.setDbName(db);
+          mongoStats.setLast(updateTime);
+      } else {
+          mongoStats.setLast(updateTime);
+      }
+      statsRepository.save(mongoStats);
     }
 
     public boolean existsWithId(int id, String schema) {
-        Object result = mongoTemplate.findById(id, Object.class, schema);
-        return result != null;
+      Object result = mongoTemplate.findById(id, Object.class, schema);
+      return result != null;
     }   
 }

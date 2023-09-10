@@ -18,34 +18,33 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class SqlTestController {
     
-    @Autowired
-    private MongoTemplate mongoTemplate;
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+  @Autowired
+  private MongoTemplate mongoTemplate;
+  @Autowired
+  private JdbcTemplate jdbcTemplate;
 
-    private int[] tests = new int[] {2000, 1000, 500, 100, 60, 30};
-    private int[] finalCount = new int[] {2000, 3000, 3500, 3600, 3660, 3690};
-    private int[] finalCountForDelete = new int[] {1690, 690, 190, 90, 30, 0};
+  private int[] tests = new int[] {2000, 1000, 500, 100, 60, 30};
+  private int[] finalCount = new int[] {2000, 3000, 3500, 3600, 3660, 3690};
+  private int[] finalCountForDelete = new int[] {1690, 690, 190, 90, 30, 0};
 
   @GetMapping("/testSqlInsertDelay")
   String testSqlInsertDelay() throws InterruptedException {
     for (int i = 1; i <= 10; i++) {
-        int randid = 220 + new Random().nextInt(16000);
-		String query = "insert into client VALUES ("+ i +",'" + randid +"', '"+ randid + "')";
-        // long start = System.currentTimeMillis();
-        jdbcTemplate.execute(query);
-        long start = System.currentTimeMillis();
+      int randid = 220 + new Random().nextInt(16000);
+		  String query = "insert into client VALUES ("+ i +",'" + randid +"', '"+ randid + "')";
+      // long start = System.currentTimeMillis();
+      jdbcTemplate.execute(query);
+      long start = System.currentTimeMillis();
 
-		Query q = new Query();
+		  Query q = new Query();
 
-		long count = mongoTemplate.count(q, "Client");
-        while (count != i) {
-            count = mongoTemplate.count(q, "Client");
-            Thread.sleep(15);
-        }
-        System.out.println("done in " + (System.currentTimeMillis() - start));
-		Thread.sleep(400);
-
+		  long count = mongoTemplate.count(q, "Client");
+      while (count != i) {
+          count = mongoTemplate.count(q, "Client");
+          Thread.sleep(15);
+      }
+      System.out.println("done in " + (System.currentTimeMillis() - start));
+		  Thread.sleep(400);
     }
     return "done";
   }
@@ -98,7 +97,6 @@ public class SqlTestController {
                 preparedStatement.setString(1, "Tudor3");
                 preparedStatement.setInt(2, myId);
             }
-
             @Override
             public int getBatchSize() {
                 return tests[wj[0]];
@@ -110,8 +108,8 @@ public class SqlTestController {
 
         long count = mongoTemplate.count(q, "Client");
         while (count != finalCount[j]) {
-            Thread.sleep(15);
-            count = mongoTemplate.count(q, "Client");
+          Thread.sleep(15);
+          count = mongoTemplate.count(q, "Client");
         }
         System.out.println("done " + tests[j] + " in " + (System.currentTimeMillis() - start));
     }
@@ -127,15 +125,14 @@ public class SqlTestController {
         jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
             @Override
             public void setValues(PreparedStatement preparedStatement, int i) throws SQLException {
-                int myId;
-                if (wj[0] == 0) {
-                    myId = i + 1;
-                } else {
-                    myId = finalCount[wj[0] - 1] + i + 1;
-                }
-                preparedStatement.setInt(1, myId);
+              int myId;
+              if (wj[0] == 0) {
+                  myId = i + 1;
+              } else {
+                  myId = finalCount[wj[0] - 1] + i + 1;
+              }
+              preparedStatement.setInt(1, myId);
             }
-
             @Override
             public int getBatchSize() {
                 return tests[wj[0]];

@@ -9,7 +9,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
-//add noop consumer back if needed
+
 public class CustomConsumer {
   public void start(String topic, KafkaChangeConsumer changeConsumer) {
     Properties properties = new Properties();

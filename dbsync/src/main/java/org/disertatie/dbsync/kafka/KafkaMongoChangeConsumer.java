@@ -54,6 +54,7 @@ public class KafkaMongoChangeConsumer implements KafkaChangeConsumer {
       return;
     }
     if (payloadValue == null || payloadKey == null) {
+      System.out.println("EERRRRRROOOORRRR2 ");
       return;
     }
     if (debug) {
@@ -77,12 +78,13 @@ public class KafkaMongoChangeConsumer implements KafkaChangeConsumer {
       afterMap.remove("_class");
     }
     
-    if (payloadValue.getPayload().getTs_ms() >= mongoService.getLastUpdate("sql")) {
+    // if (payloadValue.getPayload().getTs_ms() >= mongoService.getLastUpdate("sql")) {
       boolean success = false;
       int attempt = 0;
       do {
         try {
           attempt++;
+      
           attemptOperation(payloadValue, payloadKey, beforeMap, afterMap ); 
           success = true;
         } catch (DataIntegrityViolationException e) {
@@ -91,9 +93,9 @@ public class KafkaMongoChangeConsumer implements KafkaChangeConsumer {
           Thread.sleep(1000*(int)Math.pow(2, attempt));
         }
       } while (!success && attempt < MAX_ATTEMPTS);
-    }
+    // }
   }
-  
+
   private void attemptOperation(CaputureKafkaEventMongo payloadValue,
                                 CaputureKafkaEventMongo payloadKey,
                                 Map<String, Object> beforeMap,
